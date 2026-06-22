@@ -1,0 +1,101 @@
+import asyncio
+import importlib
+import os
+import sys
+from logging.config import fileConfig
+from pathlib import Path
+
+from alembic import context
+from sqlalchemy import pool
+from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import async_engine_from_config
+
+config = context.config
+
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
+MODEL_MODULES = (
+    "app.models.user",
+    "app.models.teacher",
+    "app.models.student",
+    "app.models.school_class",
+    "app.models.lesson",
+    "app.models.enrollment",
+)
+
+
+def get_database_url() -> str:
+    return os.getenv(
+        "DATABASE_URL",
+        config.get_main_option("sqlalchemy.url"),
+    )
+
+
+def load_target_metadata():
+    for module_name in MODEL_MODULES:
+        importlib.import_module(module_name)
+
+    try:
+        from app.db.base import Base
+    except ImportError:
+        return None
+
+    return getattr(Base, "metadata", None)
+
+
+config.set_main_option("sqlalchemy.url", get_database_url())
+target_metadata = load_target_metadata()
+
+
+def run_migrations_offline() -> None:
+    context.configure(
+        url=get_database_url(),
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+        compare_type=True,
+        compare_server_default=True,
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def do_run_migrations(connection: Connection) -> None:
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        compare_type=True,
+        compare_server_default=True,
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+async def run_async_migrations() -> None:
+    connectable = async_engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    async with connectable.connect() as connection:
+        await connection.run_sync(do_run_migrations)
+
+    await connectable.dispose()
+
+
+def run_migrations_online() -> None:
+    asyncio.run(run_async_migrations())
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()
