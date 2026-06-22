@@ -336,26 +336,33 @@ Row 2: [Lessons table — recent / upcoming]              [Enrollment summary ch
 [← Back]  Class: 9B — Spring 2026              [Edit] [Add Lesson]
 
 ┌─────────────────────────────────────────────────────────┐
+│ Class roster                                             │
+│  Student         Grade    Status      [Remove]          │
+│  Sara Ahmed      9        Active      [×]               │
+│  Ali Hassan      9        Active      [×]               │
+└─────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────┐
 │ Lessons in this class                                   │
-│  Subject     Teacher          Students   Schedule  [⋯] │
-│  Math        Ahmed Hassan     24         Mon/Wed   [⋯] │
-│  Physics     Leila Rahimi     21         Tue/Thu   [⋯] │
-│  English     Mark Evans       27         Mon/Fri   [⋯] │
+│  Subject     Teacher          Schedule      [⋯]         │
+│  Math        Ahmed Hassan     Mon/Wed       [⋯]         │
+│  Physics     Leila Rahimi     Tue/Thu       [⋯]         │
+│  English     Mark Evans       Mon/Fri       [⋯]         │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ### Lesson detail page
 
 ```
-[← Back]  Mathematics — Class 9B                  [Edit] [Enroll Students]
+[← Back]  Mathematics — Class 9B                  [Edit]
 
-[Teacher card — name, dept, avatar]    [Stat: 24 students enrolled]
+[Teacher card — name, dept, avatar]    [Stat: 24 students in class]
 
 ┌─────────────────────────────────────────────────────────┐
-│ Enrolled students                                       │
-│  Name            Grade    Enrolled at       [Remove]   │
-│  Sara Ahmed      9        2026-02-01        [×]        │
-│  Ali Hassan      9        2026-02-01        [×]        │
+│ Students in this class                                  │
+│  Name            Grade    Status         [View]         │
+│  Sara Ahmed      9        Active         [↗]           │
+│  Ali Hassan      9        Active         [↗]           │
 └─────────────────────────────────────────────────────────┘
 ```
 

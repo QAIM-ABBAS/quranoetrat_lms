@@ -17,20 +17,23 @@
 
 ## 1. Domain model
 
-The core insight of the data model is that **enrollment is at the lesson level, not the class level**.
+The core insight of the data model is that **enrollment is at the class level, not the lesson level**.
 
 ```
 SchoolClass "9B - Spring 2026"
- ├── Lesson "Mathematics"  →  teacher_id: 1  →  enrolled: [student 3, 5, 7]
- ├── Lesson "Physics"      →  teacher_id: 2  →  enrolled: [student 3, 8, 9]
- └── Lesson "English"      →  teacher_id: 3  →  enrolled: [student 5, 7, 8]
+ ├── Lesson "Mathematics"  →  teacher_id: 1
+ ├── Lesson "Physics"      →  teacher_id: 2
+ └── Lesson "English"      →  teacher_id: 3
+
+Students enrolled in class: [student 3, 5, 7, 8, 9]
 ```
 
 Key consequences:
-- A `SchoolClass` has **no direct student list** — a student's membership in a class is inferred by querying which of its lessons they are enrolled in.
-- Multiple teachers teach within the same class (one per lesson). There is no "class teacher" concept in the data model; that can be a UI convention if needed.
-- The same student can be in multiple lessons within the same class (partial enrollment is possible and valid).
+- A `SchoolClass` has a **direct student list** — a student's membership in a class is recorded explicitly.
+- Lessons belong to a class, but students are not enrolled into lessons directly.
+- Multiple teachers may teach different lessons inside the same class.
 - A teacher can teach lessons in multiple classes simultaneously.
+- The roster for a lesson is derived from the class roster, because lesson attendance is modeled through the class context.
 
 ---
 
@@ -75,7 +78,7 @@ school_classes
   description     TEXT
   created_at      TIMESTAMPTZ DEFAULT NOW()
   updated_at      TIMESTAMPTZ DEFAULT NOW()
-  UNIQUE (name, term)                  -- same class can't exist twice in same term
+  UNIQUE (name, term)
 
 lessons
   id              SERIAL PRIMARY KEY
@@ -88,10 +91,10 @@ lessons
   updated_at      TIMESTAMPTZ DEFAULT NOW()
 
 enrollments
-  lesson_id       INT NOT NULL REFERENCES lessons(id) ON DELETE CASCADE
+  school_class_id INT NOT NULL REFERENCES school_classes(id) ON DELETE CASCADE
   student_id      INT NOT NULL REFERENCES students(id) ON DELETE CASCADE
   enrolled_at     TIMESTAMPTZ DEFAULT NOW()
-  PRIMARY KEY (lesson_id, student_id)  -- composite PK, no surrogate needed
+  PRIMARY KEY (school_class_id, student_id)
 ```
 
 ### Indexes beyond PKs
@@ -99,10 +102,11 @@ enrollments
 ```sql
 CREATE INDEX ix_lessons_class   ON lessons (school_class_id);
 CREATE INDEX ix_lessons_teacher ON lessons (teacher_id);
+CREATE INDEX ix_enroll_class    ON enrollments (school_class_id);
 CREATE INDEX ix_enroll_student  ON enrollments (student_id);
 ```
 
-The `enrollments` composite PK `(lesson_id, student_id)` is itself the unique constraint that bulk-enroll exploits with `INSERT … ON CONFLICT DO NOTHING`.
+The `enrollments` composite PK `(school_class_id, student_id)` is itself the unique constraint that bulk-enroll exploits with `INSERT … ON CONFLICT DO NOTHING`.
 
 ### Why `school_classes` and not `classes`?
 
@@ -139,10 +143,10 @@ models/*.py                    ← SQLAlchemy ORM model definitions. No methods,
 ### Services
 
 `services/enrollment_service.py` is the main business layer entry:
-- `enroll(db, lesson_id, student_id)` — validates both IDs exist, then upserts
-- `bulk_enroll(db, lesson_id, student_ids)` — batch insert via core `INSERT … ON CONFLICT DO NOTHING`
-- `unenroll(db, lesson_id, student_id)` — hard delete with existence check
-- `get_roster(db, lesson_id)` — returns full student list for a lesson
+- `enroll(db, school_class_id, student_id)` — validates both IDs exist, then upserts
+- `bulk_enroll(db, school_class_id, student_ids)` — batch insert via core `INSERT … ON CONFLICT DO NOTHING`
+- `unenroll(db, school_class_id, student_id)` — hard delete with existence check
+- `get_roster(db, school_class_id)` — returns full student list for a class
 
 ---
 
@@ -213,19 +217,19 @@ All routes under `/api/v1/`. The prefix is configured in `core/config.py` so bum
 
 ### Filtering
 
-Lessons support `?class_id=` and `?teacher_id=` query params. Enrollments support `?lesson_id=` and `?student_id=`. All filters are AND-combined.
+Lessons support `?class_id=` and `?teacher_id=` query params. Enrollments support `?class_id=` and `?student_id=`. All filters are AND-combined.
 
 ### Bulk enroll endpoint
 
 ```
 POST /api/v1/enrollments/bulk
 {
-  "lesson_id": 12,
+  "class_id": 12,
   "student_ids": [3, 5, 7, 9, 11]
 }
 ```
 
-Uses Postgres `INSERT INTO enrollments (lesson_id, student_id) VALUES …  ON CONFLICT DO NOTHING` — idempotent, safe to call repeatedly with overlapping lists (e.g. re-importing a roster CSV). Returns a count of newly-enrolled vs already-enrolled.
+Uses Postgres `INSERT INTO enrollments (school_class_id, student_id) VALUES … ON CONFLICT DO NOTHING` — idempotent, safe to call repeatedly with overlapping lists (e.g. re-importing a roster CSV). Returns a count of newly-enrolled vs already-enrolled.
 
 ### 404 vs 403
 

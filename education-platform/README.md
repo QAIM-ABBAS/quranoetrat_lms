@@ -6,12 +6,14 @@ A production-ready school management system for managing teachers, classes, less
 
 ```
 SchoolClass "9B - Spring 2026"
- ├── Lesson "Mathematics"  →  Teacher: Ahmed Hassan  →  Students: [Sara, Ali, ...]
- ├── Lesson "Physics"      →  Teacher: Leila Rahimi  →  Students: [Sara, Yusuf, ...]
- └── Lesson "English"      →  Teacher: Mark Evans    →  Students: [Ali, Yusuf, ...]
+ ├── Lesson "Mathematics"  →  Teacher: Ahmed Hassan
+ ├── Lesson "Physics"      →  Teacher: Leila Rahimi
+ └── Lesson "English"      →  Teacher: Mark Evans
+
+Students in this class: [Sara, Ali, Yusuf, ...]
 ```
 
-A class is a label that groups lessons. Each lesson has **exactly one teacher** and **its own student roster**. A student "belongs to class 9B" only in the sense that they are enrolled in one or more of its lessons — there is no direct class-level membership.
+A class is the enrollment boundary. Students are enrolled directly into a class, and lessons belong to that class. Each lesson has exactly one teacher, but the class roster is the source of truth for which students belong to the class.
 
 ---
 
@@ -163,9 +165,9 @@ All endpoints live under `/api/v1`. Prefix every path below with that.
 | POST   | `/lessons`                            | Admin         | Create lesson (assign teacher + class)   |
 | GET    | `/lessons/{id}`                       | Admin/Teacher | Lesson detail with enrollment list       |
 | GET    | `/enrollments`                        | Admin         | List enrollments                         |
-| POST   | `/enrollments`                        | Admin         | Enroll a student in a lesson             |
-| POST   | `/enrollments/bulk`                   | Admin         | Bulk-enroll a list of students           |
-| DELETE | `/enrollments/{lesson_id}/{student_id}` | Admin       | Remove a student from a lesson           |
+| POST   | `/enrollments`                        | Admin         | Enroll a student in a class              |
+| POST   | `/enrollments/bulk`                   | Admin         | Bulk-enroll a list of students into a class |
+| DELETE | `/enrollments/{class_id}/{student_id}` | Admin       | Remove a student from a class            |
 
 Full interactive docs at `/docs` (Swagger) or `/redoc`.
 
@@ -177,7 +179,7 @@ Full interactive docs at `/docs` (Swagger) or `/redoc`.
 | --------- | ------------------------------------------------------------- |
 | `admin`   | Everything — CRUD on all resources                            |
 | `teacher` | View their own lessons and enrolled students. Read-only else. |
-| `student` | View lessons they are enrolled in. Nothing else.              |
+| `student` | View lessons for the classes they are enrolled in. Nothing else. |
 
 ---
 
