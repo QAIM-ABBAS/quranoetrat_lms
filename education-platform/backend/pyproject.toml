@@ -6,20 +6,15 @@ build-backend = "setuptools.build_meta"
 name = "quran-oetrat-backend"
 version = "0.1.0"
 description = "Backend API for the Quran Oetrat education platform."
-readme = "../README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "alembic>=1.13.2",
-    "asyncpg>=0.29.0",
-    "bcrypt>=4.1.3",
-    "email-validator>=2.2.0",
-    "fastapi>=0.111.0",
-    "passlib[bcrypt]>=1.7.4",
-    "pydantic-settings>=2.3.4",
-    "python-jose[cryptography]>=3.3.0",
-    "python-multipart>=0.0.9",
-    "sqlalchemy[asyncio]>=2.0.31",
-    "uvicorn[standard]>=0.30.1"
+    "alembic>=1.13.2",                # Migrations
+    "asyncpg>=0.29.0",                # PostgreSQL async driver
+    "fastapi[standard]>=0.111.0",     # Includes uvicorn, multipart, email-validator, etc.
+    "passlib[bcrypt]>=1.7.4",         # Password hashing (brings bcrypt with it)
+    "pydantic-settings>=2.3.4",       # Settings management
+    "python-jose[cryptography]>=3.3.0", # JWT handling
+    "sqlalchemy[asyncio]>=2.0.31",    # Async ORM
 ]
 
 [project.optional-dependencies]
@@ -32,8 +27,10 @@ dev = [
     "ruff>=0.5.0"
 ]
 
-[tool.setuptools]
-py-modules = []
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+namespaces = true
 
 [tool.black]
 line-length = 88
