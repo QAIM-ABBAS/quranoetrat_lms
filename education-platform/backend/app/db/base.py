@@ -12,7 +12,10 @@ NAMING_CONVENTION = {
 
 class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
+<<<<<<< HEAD
 
     @declared_attr.directive
     def __tablename__(cls) -> str:
         return cls.__name__.lower()
+=======
+>>>>>>> parent of dab17bb (Delete education-platform directory)

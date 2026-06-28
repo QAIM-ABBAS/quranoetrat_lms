@@ -29,4 +29,8 @@ async def drop_db() -> None:
     import_models()
 
     async with engine.begin() as connection:
+<<<<<<< HEAD
         await connection.run_sync(Base.metadata.drop_all)
+=======
+        await connection.run_sync(Base.metadata.drop_all)
+>>>>>>> parent of dab17bb (Delete education-platform directory)
